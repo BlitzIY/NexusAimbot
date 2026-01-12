@@ -10,7 +10,7 @@ local Camera = Workspace.CurrentCamera
 -- Rayfield UI
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
-   Name = "Teste | developed by Blitz",
+   Name = "Test | developed by Blitz",
    LoadingTitle = "LOading...",
    LoadingSubtitle = "By Blitz",
    ConfigurationSaving = {
