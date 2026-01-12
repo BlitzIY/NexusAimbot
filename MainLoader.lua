@@ -1,6 +1,3 @@
--- Aimbot + ESP (Highlight) para ESTUDO
--- Azul = Seu time | Vermelho = Inimigo
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -13,9 +10,9 @@ local Camera = Workspace.CurrentCamera
 -- Rayfield UI
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
-   Name = "Aimbot + ESP | Estudo",
-   LoadingTitle = "Carregando...",
-   LoadingSubtitle = "por 813737182^192",
+   Name = "Teste | developed by Blitz",
+   LoadingTitle = "LOading...",
+   LoadingSubtitle = "By Blitz",
    ConfigurationSaving = {
       Enabled = true,
       FolderName = nil,
@@ -387,8 +384,15 @@ local function updateCrosshair()
 end
 
 -- Função 16: Fly hack
+local flyConnection = nil
 local function fly()
     if not CONFIG.MISC_FLY_ENABLED or not LocalPlayer.Character then return end
+    
+    -- Disconnect previous fly connection
+    if flyConnection then
+        flyConnection:Disconnect()
+        flyConnection = nil
+    end
     
     local character = LocalPlayer.Character
     local humanoid = character:FindFirstChild("Humanoid")
@@ -412,7 +416,10 @@ local function fly()
     
     -- Controles
     local function updateFly()
-        if not flyBV or not flyBG then return end
+        if not flyBV or not flyBV.Parent or not flyBG or not flyBG.Parent then 
+            flyConnection:Disconnect()
+            return 
+        end
         
         local camCF = Camera.CFrame
         local moveVector = Vector3.new(0, 0, 0)
@@ -440,12 +447,19 @@ local function fly()
         flyBG.CFrame = Camera.CFrame
     end
     
-    RunService.RenderStepped:Connect(updateFly)
+    flyConnection = RunService.RenderStepped:Connect(updateFly)
 end
 
 -- Função 17: Noclip
+local noclipActive = false
 local function noclip()
-    if not CONFIG.MISC_NOCLIP then return end
+    if not CONFIG.MISC_NOCLIP then 
+        noclipActive = false
+        return 
+    end
+    
+    if noclipActive then return end
+    noclipActive = true
     
     local character = LocalPlayer.Character
     if not character then return end
@@ -531,9 +545,9 @@ local function triggerbot()
     
     if target and target.Parent then
         local mouse = LocalPlayer:GetMouse()
-        mouse1press()
-        wait(CONFIG.AIM_TRIGGER_DELAY)
-        mouse1release()
+        mouse:TriggerButton1Down()
+        task.wait(CONFIG.AIM_TRIGGER_DELAY)
+        mouse:TriggerButton1Up()
     end
 end
 
@@ -1121,10 +1135,12 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 -- LOOP PRINCIPAL
+local lastNoclipTime = 0
 RunService.RenderStepped:Connect(function()
     -- Atualizar círculo FOV
     if fovCircle and CONFIG.AIM_USE_FOV_CIRCLE then
-        fovCircle.Position = UserInputService:GetMouseLocation()
+        local mousePos = UserInputService:GetMouseLocation()
+        fovCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
     end
     
     -- Atualizar crosshair
@@ -1135,24 +1151,28 @@ RunService.RenderStepped:Connect(function()
     -- ESP
     if CONFIG.ESP_ENABLED then
         for player, data in pairs(highlights) do
-            if data.Highlight and player.Character then
+            if data and data.Highlight and player.Character then
                 updateESPColor(player)
                 if CONFIG.ESP_SHOW_HEALTH or CONFIG.ESP_SHOW_DISTANCE then
                     updateESPLabels(player)
                 end
             else
                 -- Remover se o jogador não tiver character
-                if highlights[player] then
-                    highlights[player].Highlight:Destroy()
+                if highlights[player] and highlights[player].Highlight then
+                    pcall(function() highlights[player].Highlight:Destroy() end)
                     highlights[player] = nil
                 end
             end
         end
     end
     
-    -- Noclip
+    -- Noclip (throttled to every 0.1 seconds)
     if CONFIG.MISC_NOCLIP then
-        noclip()
+        local currentTime = tick()
+        if currentTime - lastNoclipTime >= 0.1 then
+            noclip()
+            lastNoclipTime = currentTime
+        end
     end
     
     -- Aimbot
@@ -1206,6 +1226,6 @@ initializeAllSystems()
 
 Rayfield:Notify({
     Title = "Aimbot + ESP Carregado",
-    Content = "45 funções ativas | Desenvolvido por 813737182^192",
+    Content = "45 funções ativas | developed by Blitz",
     Duration = 5,
 })
